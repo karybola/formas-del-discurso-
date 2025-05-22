@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quiz Neptur: Formas del Discurso</title>
+    <style>
+        /* --- Optimización para Scroll en WebView --- */
+        html {
+            -webkit-overflow-scrolling: touch; /* Para un scroll más fluido en iOS y algunos WebViews Android */
+            scroll-behavior: smooth; /* Scroll suave para anclas, no directamente para el problema, pero bueno tenerlo */
+        }
+        /* --- Fin Optimización para Scroll --- */
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6DD5FA, #2980B9);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        #quiz-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 750px;
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        #quiz-header {
+            margin-bottom: 25px;
+            border-bottom: 2px solid #007bff; /* Azul para el borde, haciendo juego con el título Neptur */
+            padding-bottom: 15px;
+        }
+
+        #quiz-header h1 {
+            color: #2C3E50;
+            font-size: 2.2em;
+            margin-bottom: 5px;
+        }
+         #quiz-header h1 .neptur-brand {
+            color: #007bff; /* AZUL para Neptur */
+            font-weight: bold;
+        }
+        #quiz-header p {
+            font-size: 1.1em;
+            color: #555;
+        }
+
+
+        #timer {
+            font-size: 1.2em;
+            color: #E74C3C;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        #question-area h2 {
+            font-size: 1.5em;
+            color: #34495E;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            text-align: left;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background-color: #3498DB;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #2980B9;
+            transform: translateY(-2px);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background-color: #2ECC71 !important;
+            border: 2px solid #27ae60;
+        }
+
+        .option-btn.incorrect {
+            background-color: #E74C3C !important;
+            border: 2px solid #c0392b;
+        }
+
+        #explanation-area {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.95em;
+            line-height: 1.6;
+            border-left: 5px solid #007bff; /* Azul para el borde de la explicación */
+        }
+        #explanation-area h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+        #explanation-area p {
+            margin-bottom: 5px;
+        }
+
+        #navigation-area button {
+            background-color: #007bff; /* Botón de navegación azul */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 15px;
+        }
+
+        #navigation-area button:hover {
+            background-color: #0056b3; /* Azul más oscuro para hover */
+        }
+
+        #results-screen {
+            display: none;
+        }
+        #results-screen h2 {
+             color: #2C3E50;
+             font-size: 2em;
+        }
+        #results-screen p {
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+        #detailed-results-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .result-item {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .result-item p { font-size: 1em; margin: 8px 0; }
+        .result-item strong { color: #333; }
+        .result-item .user-answer.correct { color: #2ECC71; font-weight: bold; }
+        .result-item .user-answer.incorrect { color: #E74C3C; font-weight: bold; }
+        .result-item .explanation-preview {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        #start-screen {
+            display: block;
+        }
+        #start-screen p {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        #start-btn {
+            background-color: #F39C12;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.3em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #start-btn:hover {
+            background-color: #E67E22;
+        }
+
+        /* Responsividad */
+        @media (max-width: 600px) {
+            #quiz-container {
+                padding: 20px;
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+            #quiz-header h1 {
+                font-size: 1.8em;
+            }
+            #question-area h2 {
+                font-size: 1.2em;
+            }
+            .option-btn {
+                padding: 12px 15px;
+                font-size: 0.95em;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div id="start-screen">
+            <div id="quiz-header">
+                <h1>Quiz <span class="neptur-brand">Neptur</span></h1>
+                <p>Formas del Discurso (Español 2)</p>
+            </div>
+            <p>Bienvenido al quiz sobre las Formas del Discurso. Tendrás <strong>12 minutos</strong> para completarlo.</p>
+            <p>Lee cada pregunta con atención y selecciona la mejor respuesta. Al final, podrás revisar tus aciertos y aprender de cada explicación.</p>
+            <button id="start-btn">Comenzar Quiz</button>
+        </div>
+
+        <div id="question-screen" style="display:none;">
+            <div id="quiz-header">
+                 <h1>Quiz <span class="neptur-brand">Neptur</span></h1>
+                 <p id="question-counter"></p>
+            </div>
+            <div id="timer">Tiempo restante: 12:00</div>
+            <div id="question-area">
+                <h2 id="question-text"></h2>
+                <div id="options-grid">
+                    <button class="option-btn" data-index="0"></button>
+                    <button class="option-btn" data-index="1"></button>
+                    <button class="option-btn" data-index="2"></button>
+                    <button class="option-btn" data-index="3"></button>
+                </div>
+            </div>
+            <div id="explanation-area" style="display:none;">
+                <h3 id="explanation-title"></h3>
+                <p id="explanation-text"></p>
+            </div>
+            <div id="navigation-area">
+                <button id="next-btn" style="display:none;">Siguiente Pregunta</button>
+            </div>
+        </div>
+
+        <div id="results-screen" style="display:none;">
+            <h2>¡Quiz Completado!</h2>
+            <p id="final-score"></p>
+            <p id="time-taken"></p>
+            <h3>Resumen Detallado de Respuestas:</h3>
+            <div id="detailed-results-container">
+                <!-- Aquí se mostrarán los detalles de cada pregunta -->
+            </div>
+            <button id="restart-btn">Volver a Intentar</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN DEL QUIZ ---
+        const TOTAL_TIME = 12 * 60; 
+
+ let questions = [
+    {
+        text: "¿Cuál es la principal función del discurso narrativo?",
+        options: [
+            "Presentar las características de un objeto o persona.",
+            "Relatar situaciones o hechos reales o imaginarios de forma coherente.",
+            "Convencer al receptor mediante opiniones y puntos de vista.",
+            "Explicar el significado de las palabras."
+        ],
+        correctAnswerIndex: 1,
+        explanation: {
+            correct: "¡Exacto! El discurso narrativo se dedica a narrar, es decir, contar una historia o suceso de manera encadenada.",
+            incorrectBase: "Esa no es la función principal del discurso narrativo. ",
+            optionsExplanation: [
+                "Presentar características es propio del discurso descriptivo.",
+                "Esta es la definición correcta.",
+                "Convencer es el objetivo del discurso argumentativo.",
+                "Explicar significados sería una función metalingüística o referencial, no primariamente narrativa."
+            ]
+        }
+    },
+    {
+        text: "Las tres partes fundamentales que componen un discurso narrativo son:",
+        options: [
+            "Tesis, argumentos y conclusión.",
+            "Espacio físico, psicológico y social.",
+            "Inicio, nudo y desenlace.",
+            "Objetividad, subjetividad y adjetivos."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Correcto! Todo discurso narrativo se estructura clásicamente en un inicio (planteamiento), un nudo (conflicto) y un desenlace (resolución).",
+            incorrectBase: "Estas no son las tres partes estructurales de un discurso narrativo. ",
+            optionsExplanation: [
+                "Tesis, argumentos y conclusión son partes del discurso argumentativo.",
+                "Espacio físico, psicológico y social son los tipos de espacios que desarrollan la narración, no su estructura secuencial.",
+                "Esta es la respuesta correcta.",
+                "Objetividad, subjetividad y adjetivos son elementos que pueden estar presentes, pero no son su estructura fundamental."
+            ]
+        }
+    },
+    {
+        text: "En el discurso narrativo, ¿a qué se refiere el 'espacio psicológico'?",
+        options: [
+            "A las características del entorno físico como el clima o el lugar.",
+            "A las emociones, sentimientos y sensaciones de los personajes.",
+            "Al entorno de los grupos de personas que acompañan la historia.",
+            "Al momento exacto en que ocurren los hechos."
+        ],
+        correctAnswerIndex: 1,
+        explanation: {
+            correct: "¡Muy bien! El espacio psicológico en una narración se centra en el mundo interior de los personajes: sus emociones, pensamientos y sensaciones.",
+            incorrectBase: "Esta opción describe otro tipo de espacio narrativo. ",
+            optionsExplanation: [
+                "Eso corresponde al espacio físico.",
+                "Esta es la definición correcta.",
+                "Esto describe el espacio social.",
+                "El momento de los hechos se refiere al tiempo narrativo, no a un tipo de espacio."
+            ]
+        }
+    },
+    {
+        text: "El discurso que se enfoca en brindar las características o cualidades de una persona, objeto, lugar o animal es el:",
+        options: [
+            "Discurso argumentativo",
+            "Discurso narrativo",
+            "Discurso descriptivo",
+            "Discurso expositivo"
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Excelente! El discurso descriptivo tiene como finalidad principal detallar cómo es algo o alguien, enlistando sus atributos y particularidades.",
+            incorrectBase: "Este tipo de discurso tiene otra finalidad principal. ",
+            optionsExplanation: [
+                "El argumentativo busca convencer.",
+                "El narrativo relata hechos.",
+                "Esta es la respuesta correcta.",
+                "El expositivo (similar al referencial) presenta información de forma organizada, aunque la descripción es una herramienta clave en él."
+            ]
+        }
+    },
+    {
+        text: "Una característica común en el discurso descriptivo es el uso frecuente de:",
+        options: [
+            "Diálogos entre personajes.",
+            "Una secuencia temporal clara de inicio, nudo y desenlace.",
+            "Adjetivos calificativos y pausas descriptivas.",
+            "Argumentos lógico-racionales para convencer."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Así es! Para describir, se utilizan abundantemente adjetivos calificativos (color, tamaño, forma, etc.) y se suelen hacer pausas para detallar cada característica.",
+            incorrectBase: "Este elemento es más característico de otro tipo de discurso. ",
+            optionsExplanation: [
+                "Los diálogos son típicos del discurso narrativo.",
+                "La secuencia inicio-nudo-desenlace es del discurso narrativo.",
+                "Esta es la respuesta correcta.",
+                "Los argumentos lógico-racionales son del discurso argumentativo."
+            ]
+        }
+    },
+    {
+        text: "¿Cuál es la intención principal del discurso argumentativo?",
+        options: [
+            "Relatar una historia de forma amena.",
+            "Describir detalladamente un paisaje.",
+            "Convencer al receptor sobre una idea, decisión o darle una enseñanza.",
+            "Informar objetivamente sobre un suceso."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Perfecto! El discurso argumentativo busca, mediante la presentación de razones y puntos de vista, influir en el receptor para que adopte una postura o realice una acción.",
+            incorrectBase: "La intención principal del discurso argumentativo es otra. ",
+            optionsExplanation: [
+                "Relatar historias es función del discurso narrativo.",
+                "Describir paisajes es función del discurso descriptivo.",
+                "Esta es la respuesta correcta.",
+                "Informar objetivamente es más propio de un discurso referencial o expositivo."
+            ]
+        }
+    },
+    {
+        text: "Las tres partes que componen un discurso argumentativo son:",
+        options: [
+            "Inicio, desarrollo y final.",
+            "Personajes, ambiente y trama.",
+            "Tesis, argumentos y conclusión.",
+            "Introducción, cuerpo y moraleja."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Muy bien! Un discurso argumentativo se estructura presentando una tesis (la idea a defender), los argumentos (las razones que la sustentan) y una conclusión (la validación de la tesis).",
+            incorrectBase: "Estas no son las partes específicas del discurso argumentativo según el texto. ",
+            optionsExplanation: [
+                "Estos son términos generales para cualquier texto, pero el argumentativo tiene nombres más específicos.",
+                "Estos son elementos del discurso narrativo.",
+                "Esta es la respuesta correcta.",
+                "La moraleja es típica de fábulas (narrativo), aunque la conclusión argumentativa puede tener una enseñanza."
+            ]
+        }
+    },
+    {
+        text: "En el discurso argumentativo, los argumentos de tipo 'lógico-racional' buscan convencer mediante:",
+        options: [
+            "El uso de las emociones y la voluntad del receptor.",
+            "Halagos y palabras con carga emotiva.",
+            "El uso de la razón, datos, estadísticas y elementos científicamente probados.",
+            "La belleza estética del lenguaje."
+        ],
+        correctAnswerIndex: 2,
+        explanation: {
+            correct: "¡Correcto! Los argumentos lógico-racionales apelan a la inteligencia y el razonamiento del receptor, utilizando pruebas objetivas y verificables.",
+            incorrectBase: "Este tipo de persuasión corresponde a otro tipo de componente argumentativo. ",
+            optionsExplanation: [
+                "Esto corresponde a los argumentos retórico-afectivos.",
+                "Estos también son recursos retórico-afectivos.",
+                "Esta es la respuesta correcta.",
+                "La belleza estética es más propia de la función poética, aunque un argumento puede ser elegante."
+            ]
+        }
+    },
+    {
+        text: "El ejemplo del discurso sobre los desechos sólidos (\"¿Sabías que en nuestro país la presencia de desechos sólidos ha ido en continuo aumento...\") utiliza predominantemente argumentos de tipo:",
+        options: [
+            "Retórico-afectivo, apelando a la sorpresa.",
+            "Lógico-racional, presentando datos y estadísticas.",
+            "Descriptivo, detallando los tipos de basura.",
+            "Narrativo, contando una historia sobre la basura."
+        ],
+        correctAnswerIndex: 1,
+        explanation: {
+            correct: "¡Excelente! Aunque puede generar una reacción emocional, el discurso se basa en datos concretos (porcentajes, kilogramos por persona) para fundamentar la necesidad de un cambio, lo cual es característico de los argumentos lógico-racionales.",
+            incorrectBase: "Si bien puede tener un impacto emocional, su base principal es otra. ",
+            optionsExplanation: [
+                "Si bien busca generar conciencia, su principal herramienta aquí son los datos, no solo la emoción.",
+                "Esta es la respuesta correcta, ya que presenta cifras y hechos para convencer.",
+                "Aunque menciona el origen, no se centra en describir la basura, sino en el problema que representa basado en cifras.",
+                "No está contando una historia secuencial."
+            ]
+        }
+    },
+    {
+        text: "Un discurso que intenta persuadir sobre lo exquisito de la comida de un restaurante, resaltando sus cualidades y la experiencia placentera, se apoyaría más en argumentos de tipo:",
+        options: [
+            "Lógico-racional, con análisis nutricionales.",
+            "Retórico-afectivo, apelando al disfrute y las sensaciones.",
+            "Narrativo, contando la historia del chef.",
+            "Descriptivo, listando solo los ingredientes."
+        ],
+        correctAnswerIndex: 1,
+        explanation: {
+            correct: "¡Así es! Para convencer sobre algo subjetivo como el sabor y la experiencia en un restaurante, se suele apelar a las emociones, los sentidos y las expectativas del receptor, lo cual es propio de los argumentos retórico-afectivos.",
+            incorrectBase: "Este tipo de argumento no sería el más efectivo para este propósito. ",
+            optionsExplanation: [
+                "Un análisis nutricional es lógico-racional, pero no necesariamente convence de que algo es 'exquisito' en términos de disfrute.",
+                "Esta es la respuesta correcta.",
+                "Contar la historia del chef podría ser parte, pero el convencimiento sobre el sabor se basa más en lo afectivo/sensorial.",
+                "Listar ingredientes es descriptivo/referencial, no necesariamente persuasivo sobre la calidad de la experiencia."
+            ]
+        }
+    }
+];
+
+        // --- VARIABLES GLOBALES ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = TOTAL_TIME;
+        let timerInterval;
+        let quizStartTime;
+        let userAnswers = [];
+
+        // --- ELEMENTOS DEL DOM ---
+        const startScreen = document.getElementById('start-screen');
+        const questionScreen = document.getElementById('question-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const timerDisplay = document.getElementById('timer');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const optionButtons = document.querySelectorAll('.option-btn');
+        const explanationArea = document.getElementById('explanation-area');
+        const explanationTitle = document.getElementById('explanation-title');
+        const explanationText = document.getElementById('explanation-text');
+        const nextBtn = document.getElementById('next-btn');
+        
+        const finalScoreDisplay = document.getElementById('final-score');
+        const timeTakenDisplay = document.getElementById('time-taken');
+        const detailedResultsContainer = document.getElementById('detailed-results-container');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // --- FUNCIONES ---
+        function startQuiz() {
+            // console.log("startQuiz function called!"); // Para depuración
+            // console.log("Questions array:", questions); // Para depuración
+            if (questions.length === 0) {
+                alert("Error: No hay preguntas cargadas. Por favor, revisa el array 'questions' en el script.");
+                return;
+            }
+
+            startScreen.style.display = 'none';
+            questionScreen.style.display = 'block';
+            resultsScreen.style.display = 'none';
+
+            currentQuestionIndex = 0;
+            score = 0;
+            timeLeft = TOTAL_TIME;
+            userAnswers = [];
+            questions.forEach(q => {
+                q.userAnswerIndex = null;
+                q.isCorrect = null;
+            });
+
+
+            quizStartTime = new Date();
+            displayQuestion();
+            startTimer();
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const currentQuestion = questions[currentQuestionIndex];
+                questionCounter.textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+                questionText.textContent = currentQuestion.text;
+                
+                optionButtons.forEach((btn, index) => {
+                    btn.textContent = currentQuestion.options[index];
+                    btn.disabled = false;
+                    btn.classList.remove('correct', 'incorrect');
+                    btn.style.display = 'block';
+                });
+
+                explanationArea.style.display = 'none';
+                nextBtn.style.display = 'none';
+                window.scrollTo(0,0);
+            } else {
+                endQuiz();
+            }
+        }
+
+        function handleOptionClick(event) {
+            const selectedOptionIndex = parseInt(event.target.dataset.index);
+            const currentQuestion = questions[currentQuestionIndex];
+            
+            currentQuestion.userAnswerIndex = selectedOptionIndex;
+
+            optionButtons.forEach(btn => btn.disabled = true);
+
+            let explanationToShow = "";
+            let titleExplanation = "";
+
+            if (selectedOptionIndex === currentQuestion.correctAnswerIndex) {
+                score++;
+                event.target.classList.add('correct');
+                titleExplanation = "¡Respuesta Correcta!";
+                explanationToShow = currentQuestion.explanation.correct;
+                currentQuestion.isCorrect = true;
+            } else {
+                event.target.classList.add('incorrect');
+                optionButtons[currentQuestion.correctAnswerIndex].classList.add('correct');
+                titleExplanation = "Respuesta Incorrecta";
+                explanationToShow = `${currentQuestion.explanation.incorrectBase} La respuesta correcta era: "<strong>${currentQuestion.options[currentQuestion.correctAnswerIndex]}</strong>".<br><br><em>Explicación:</em> ${currentQuestion.explanation.optionsExplanation[currentQuestion.correctAnswerIndex]}`;
+                if (currentQuestion.explanation.optionsExplanation[selectedOptionIndex] !== currentQuestion.explanation.optionsExplanation[currentQuestion.correctAnswerIndex]) {
+                     explanationToShow = `Elegiste: "${currentQuestion.options[selectedOptionIndex]}".<br><em>Por qué no es correcto:</em> ${currentQuestion.explanation.optionsExplanation[selectedOptionIndex]}<br><br>La respuesta correcta era: "<strong>${currentQuestion.options[currentQuestion.correctAnswerIndex]}</strong>".<br><em>Explicación:</em> ${currentQuestion.explanation.optionsExplanation[currentQuestion.correctAnswerIndex]}`;
+                }
+                 currentQuestion.isCorrect = false;
+            }
+            
+            explanationTitle.textContent = titleExplanation;
+            explanationText.innerHTML = explanationToShow;
+            explanationArea.style.display = 'block';
+            nextBtn.style.display = 'inline-block';
+
+            userAnswers.push({
+                questionText: currentQuestion.text,
+                options: currentQuestion.options,
+                userAnswer: currentQuestion.options[selectedOptionIndex],
+                correctAnswer: currentQuestion.options[currentQuestion.correctAnswerIndex],
+                isCorrect: selectedOptionIndex === currentQuestion.correctAnswerIndex,
+                explanation: explanationToShow
+            });
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerDisplay.textContent = `Tiempo restante: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60) < 10 ? '0' : ''}${timeLeft % 60}`;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `Tiempo restante: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "¡Tiempo agotado!";
+                    endQuiz(true); 
+                }
+            }, 1000);
+        }
+
+        function endQuiz(timeUp = false) {
+            clearInterval(timerInterval);
+            questionScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+             window.scrollTo(0,0);
+
+            const quizEndTime = new Date();
+            const timeSpentMs = quizEndTime - quizStartTime;
+            const timeSpentSec = Math.floor(timeSpentMs / 1000);
+            const minutesSpent = Math.floor(timeSpentSec / 60);
+            const secondsSpent = timeSpentSec % 60;
+
+            if (timeUp) {
+                 finalScoreDisplay.textContent = `¡Tiempo agotado! Tu puntaje final es: ${score} de ${questions.length}`;
+            } else {
+                 finalScoreDisplay.textContent = `Tu puntaje final es: ${score} de ${questions.length}`;
+            }
+            timeTakenDisplay.textContent = `Tiempo utilizado: ${minutesSpent} minutos y ${secondsSpent} segundos.`;
+
+            renderDetailedResults();
+        }
+        
+        function renderDetailedResults() {
+            detailedResultsContainer.innerHTML = ''; 
+            questions.forEach((q, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.classList.add('result-item');
+                
+                let userAnswerText = "No respondida";
+                let userAnswerClass = "";
+                let explanationContent = q.explanation.optionsExplanation[q.correctAnswerIndex];
+
+                if (q.userAnswerIndex !== null) {
+                    userAnswerText = q.options[q.userAnswerIndex];
+                    if (q.isCorrect) {
+                        userAnswerClass = 'correct';
+                        explanationContent = q.explanation.correct;
+                    } else {
+                        userAnswerClass = 'incorrect';
+                        explanationContent = `Elegiste: "${q.options[q.userAnswerIndex]}". <span class="explanation-preview">(${q.explanation.optionsExplanation[q.userAnswerIndex]})</span><br>Correcta: "${q.options[q.correctAnswerIndex]}". <span class="explanation-preview">(${q.explanation.optionsExplanation[q.correctAnswerIndex]})</span>`;
+                    }
+                } else {
+                     explanationContent = `La respuesta correcta era: "${q.options[q.correctAnswerIndex]}". <span class="explanation-preview">(${q.explanation.optionsExplanation[q.correctAnswerIndex]})</span>`;
+                }
+
+                resultDiv.innerHTML = `
+                    <p><strong>Pregunta ${index + 1}:</strong> ${q.text}</p>
+                    <p>Tu respuesta: <span class="user-answer ${userAnswerClass}">${userAnswerText}</span></p>
+                    ${!q.isCorrect && q.userAnswerIndex !== null ? `<p>Respuesta correcta: <strong>${q.options[q.correctAnswerIndex]}</strong></p>` : ''}
+                     ${q.userAnswerIndex === null ? `<p>Respuesta correcta: <strong>${q.options[q.correctAnswerIndex]}</strong></p>` : ''}
+                    <p><em>Explicación:</em> ${explanationContent}</p>
+                `;
+                detailedResultsContainer.appendChild(resultDiv);
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        startBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        restartBtn.addEventListener('click', () => {
+            resultsScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+            window.scrollTo(0,0);
+        });
+
+        optionButtons.forEach(button => {
+            button.addEventListener('click', handleOptionClick);
+        });
+
+    </script>
+</body>
+</html>
